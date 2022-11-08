@@ -26,6 +26,8 @@ def initialize_parameters(layer_dims: list) -> dict:
 
 def linear_forward(A: np.array, W: np.array, b: np.array) -> (float, dict):
     """
+    Description:
+    Implement the linear part of a layer's forward propagation.
 
     @param A: the activations of the previous layer
     @param W: the weight matrix of the current layer (of shape [size of current layer, size of previous layer])
@@ -68,16 +70,18 @@ def relu(Z: float) -> (float, dict):
     return A, activation_cache
 
 
-def linear_activation_forward(A_prev, W, B, activation):
+def linear_activation_forward(A_prev: float, W: np.array, B: np.array, activation: str) -> (float, dict):
     """
+    Description:
+    Implement the forward propagation for the LINEAR->ACTIVATION layer
 
     @param A_prev: activations of the previous layer
     @param W: the weights matrix of the current layer
     @param B: the bias vector of the current layer
     @param activation: the activation function to be used (a string, either “softmax” or “relu”)
     @return:
-    A – the activations of the current layer
-    cache – a joint dictionary containing both linear_cache and activation_cache
+    A: the activations of the current layer
+    cache: a joint dictionary containing both linear_cache and activation_cache
 
     """
     Z, linear_cache = linear_forward(A_prev, W, B)
