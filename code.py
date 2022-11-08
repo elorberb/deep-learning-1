@@ -76,8 +76,19 @@ def linear_activation_forward(A_prev, W, B, activation):
     @param B: the bias vector of the current layer
     @param activation: the activation function to be used (a string, either “softmax” or “relu”)
     @return:
+    A – the activations of the current layer
+    cache – a joint dictionary containing both linear_cache and activation_cache
+
     """
-    pass
+    Z, linear_cache = linear_forward(A_prev, W, B)
+    A, activation_cache = None, None
+
+    if activation == 'relu':
+        A, activation_cache = relu(Z)
+    elif activation == 'softmax':
+        A, activation_cache = softmax(Z)
+    cache = {linear_cache: linear_cache, activation_cache: activation_cache}
+    return A, cache
 
 
 def l_model_forward(X, parameters, use_batchnorm):
