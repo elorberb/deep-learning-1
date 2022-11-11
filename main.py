@@ -18,5 +18,5 @@ def initialize_parameters(layer_dims):
 
 
 if __name__ == '__main__':
-    print(np.zeros((4,1)))
-    print(initialize_parameters([2,2,2]))
+    # print(np.zeros((4,1)))
+    print(initialize_parameters([2,2,1]))
