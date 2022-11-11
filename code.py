@@ -39,7 +39,7 @@ def linear_forward(A: np.array, W: np.array, b: np.array) -> (float, dict):
     """
 
     Z = np.dot(W, A) + b
-    linear_cache = {A: A, W: W, b: b}
+    linear_cache = {"A": A, "W": W, "b": b}
     return Z, linear_cache
 
 
@@ -64,8 +64,8 @@ def relu(Z: float) -> (float, dict):
     A – the activations of the layer
     activation_cache – returns Z, which will be useful for the backpropagation
     """
-
-    A = np.max(0, Z)
+    print(Z)
+    A = max(0, Z)
     activation_cache = Z
     return A, activation_cache
 
@@ -91,7 +91,7 @@ def linear_activation_forward(A_prev: float, W: np.array, B: np.array, activatio
         A, activation_cache = relu(Z)
     elif activation == 'softmax':
         A, activation_cache = softmax(Z)
-    cache = {linear_cache: linear_cache, activation_cache: activation_cache}
+    cache = {"linear_cache": linear_cache, "activation_cache": activation_cache}
     return A, cache
 
 
@@ -112,15 +112,17 @@ def l_model_forward(X: np.array, parameters: dict, use_batchnorm: bool):
     """
     caches = []
     A = X
-    # Relu activations
+    # Each middle layer - relu activations
     for i in range(1, len(parameters)-1):
         W, B = parameters[i][0], parameters[i][1]
         A, cache = linear_activation_forward(A_prev=A, W=W, B=B, activation="relu")
         if use_batchnorm:
             A = apply_batchnorm(A)
+
         caches.append(cache)
-    # softmax activation
-    AL, cache = linear_activation_forward(A_prev=A, W=W, B=B, activation="softmax")
+    # Last layer - softmax activation
+    last_W, last_B = parameters[-1][0], parameters[-1][1]
+    AL, cache = linear_activation_forward(A_prev=A, W=last_W, B=last_B, activation="softmax")
     caches.append(cache)
 
     return AL, caches
@@ -128,16 +130,39 @@ def l_model_forward(X: np.array, parameters: dict, use_batchnorm: bool):
 
 def compute_cost(AL, Y):
     """
-    @param AL:
-    @param Y:
+    Description:
+    Implement the cost function defined by equation. The requested cost function is categorical cross-entropy loss. The formula is as follows:
+
+    @param AL: probability vector corresponding to your label predictions, shape (num_of_classes, number of examples)
+    @param Y: the labels vector (i.e. the ground truth)
     @return:
+    cost: the cross-entropy cost
     """
-    pass
+    cost = 0
+    num_of_classes = AL[0]
+    num_of_examples = AL[1]
+    for e in num_of_classes:
+        for c in num_of_classes:
+            cost += Y[c][e] * np.log(AL[c][e])
+    cost = -1 * cost / num_of_examples
+    return cost
 
 
 def apply_batchnorm(A):
-    pass
+    """
+    Description:
+    performs batchnorm on the received activation values of a given layer.
 
+    @param A: the activation values of a given layer
+    @return:
+    NA: the normalized activation values, based on the formula learned in class
+    """
+
+    mean_values = np.mean(A)
+    var_values = np.var(A)
+    eps = np.finfo(float).eps
+    NA = (A - mean_values) / np.sqrt((var_values + eps))
+    return NA
 
 def linear_backward(dZ, cache):
     pass

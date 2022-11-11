@@ -1,5 +1,20 @@
 import numpy as np
 from code import *
+from code import apply_batchnorm
+
+def apply_batchnorm2(A):
+    """
+    performs batchnorm on the received activation values of a given layer.
+    :param A: the activation values of a given layer
+    :return:
+    NA - the normalized activation values, based on the formula learned in class
+    # """
+    sum_value = np.sum(A, axis=1, keepdims=True)
+    mean = sum_value/A.shape[1]
+    var = np.sum(np.square(A-mean), axis=1, keepdims=True)/A.shape[1]
+    eps = np.finfo(float).eps
+    NA = np.divide(np.subtract(A, mean), np.sqrt(var+eps))
+    return NA
 
 
 def initialize_parameters(layer_dims):
@@ -19,4 +34,9 @@ def initialize_parameters(layer_dims):
 
 if __name__ == '__main__':
     # print(np.zeros((4,1)))
-    print(initialize_parameters([2,2,1]))
+    a = np.array([1, 2, 3])
+    # ans1 = apply_batchnorm2(a)
+    ans2 = apply_batchnorm(a)
+
+    # print(ans1)
+    print(ans2)
