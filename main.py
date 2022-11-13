@@ -1,6 +1,6 @@
+
 import numpy as np
-from code import *
-from code import apply_batchnorm
+
 
 def apply_batchnorm2(A):
     """
@@ -33,10 +33,15 @@ def initialize_parameters(layer_dims):
 
 
 if __name__ == '__main__':
-    # print(np.zeros((4,1)))
-    a = np.array([1, 2, 3])
-    # ans1 = apply_batchnorm2(a)
-    ans2 = apply_batchnorm(a)
-
-    # print(ans1)
-    print(ans2)
+    # f_a = np.array([[4, 1, -3]])
+    # a_w1 = np.array([[1], [0], [1]])
+    #
+    # f_w1 = np.dot(a_w1, f_a)
+    # print(a_w1.shape)
+    # print(f_a.shape)
+    # print(f_w1)
+    #
+    # f_w1_2 = np.dot(f_a.T, a_w1.T)
+    # print(f_w1_2.T)
+    coverageModelSize = -1
+    assert coverageModelSize >= 0 and coverageModelSize <= 1

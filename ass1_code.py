@@ -18,13 +18,13 @@ def initialize_parameters(layer_dims: list) -> dict:
     params = {}
     # starting from 1 because index 0 is input
     for i in range(1, len(layer_dims)):
-        Wi = np.random.randn(layer_dims[i], layer_dims[i-1])  # define weights
+        Wi = np.random.randn(layer_dims[i], layer_dims[i - 1])  # define weights
         b = np.zeros((layer_dims[i], 1))  # define biases
         params[i] = [Wi, b]
     return params
 
 
-def linear_forward(A: np.array, W: np.array, b: np.array) -> (float, dict):
+def linear_forward(A: np.array, W: np.array, b: np.array) -> (float, tuple):
     """
     Description:
     Implement the linear part of a layer's forward propagation.
@@ -37,13 +37,15 @@ def linear_forward(A: np.array, W: np.array, b: np.array) -> (float, dict):
     linear_cache: a dictionary containing A, W, b (stored for making the backpropagation easier to compute)
 
     """
-
+    print("A", A.shape)
+    print("W", W.shape)
+    print("b", b)
     Z = np.dot(W, A) + b
-    linear_cache = {"A": A, "W": W, "b": b}
+    linear_cache = (A, W, b)
     return Z, linear_cache
 
 
-def softmax(Z: float) -> (float, dict):
+def softmax(Z: np.array) -> (np.array, np.array):
     """
 
     @param Z: the linear component of the activation function
@@ -57,20 +59,19 @@ def softmax(Z: float) -> (float, dict):
     return A, activation_cache
 
 
-def relu(Z: float) -> (float, dict):
+def relu(Z: np.array) -> (np.array, tuple):
     """
     @param Z: the linear component of the activation function
     @return:
     A – the activations of the layer
     activation_cache – returns Z, which will be useful for the backpropagation
     """
-    print(Z)
-    A = max(0, Z)
+    A = np.maximum(0, Z)
     activation_cache = Z
     return A, activation_cache
 
 
-def linear_activation_forward(A_prev: float, W: np.array, B: np.array, activation: str) -> (float, dict):
+def linear_activation_forward(A_prev: np.array, W: np.array, B: np.array, activation: str) -> (float, tuple):
     """
     Description:
     Implement the forward propagation for the LINEAR->ACTIVATION layer
@@ -86,16 +87,15 @@ def linear_activation_forward(A_prev: float, W: np.array, B: np.array, activatio
     """
     Z, linear_cache = linear_forward(A_prev, W, B)
     A, activation_cache = None, None
-
     if activation == 'relu':
         A, activation_cache = relu(Z)
     elif activation == 'softmax':
         A, activation_cache = softmax(Z)
-    cache = {"linear_cache": linear_cache, "activation_cache": activation_cache}
+    cache = [linear_cache, activation_cache]
     return A, cache
 
 
-def l_model_forward(X: np.array, parameters: dict, use_batchnorm: bool):
+def l_model_forward(X: np.array, parameters: dict, use_batchnorm: bool) -> (np.array, tuple):
     """
     Description:
     Implement forward propagation for the [LINEAR->RELU]*(L-1)->LINEAR->SOFTMAX computation
@@ -112,26 +112,26 @@ def l_model_forward(X: np.array, parameters: dict, use_batchnorm: bool):
     """
     caches = []
     A = X
+    layers_len = len(parameters)
     # Each middle layer - relu activations
-    for i in range(1, len(parameters)-1):
+    for i in range(1, layers_len):
         W, B = parameters[i][0], parameters[i][1]
         A, cache = linear_activation_forward(A_prev=A, W=W, B=B, activation="relu")
         if use_batchnorm:
             A = apply_batchnorm(A)
-
         caches.append(cache)
     # Last layer - softmax activation
-    last_W, last_B = parameters[-1][0], parameters[-1][1]
+    last_W, last_B = parameters[layers_len][0], parameters[layers_len][1]
     AL, cache = linear_activation_forward(A_prev=A, W=last_W, B=last_B, activation="softmax")
     caches.append(cache)
 
     return AL, caches
 
 
-def compute_cost(AL, Y):
+def compute_cost(AL: np.array, Y: np.array) -> float:
     """
     Description:
-    Implement the cost function defined by equation. The requested cost function is categorical cross-entropy loss. The formula is as follows:
+    Implement the cost function defined by equation. The requested cost function is categorical cross-entropy loss.
 
     @param AL: probability vector corresponding to your label predictions, shape (num_of_classes, number of examples)
     @param Y: the labels vector (i.e. the ground truth)
@@ -139,16 +139,18 @@ def compute_cost(AL, Y):
     cost: the cross-entropy cost
     """
     cost = 0
-    num_of_classes = AL[0]
-    num_of_examples = AL[1]
-    for e in num_of_classes:
-        for c in num_of_classes:
-            cost += Y[c][e] * np.log(AL[c][e])
-    cost = -1 * cost / num_of_examples
+    num_of_classes = AL.shape[0]
+    num_of_examples = AL.shape[1]
+    for e in range(num_of_examples):
+        for c in range(num_of_classes):
+            print(Y[c][e])
+            if Y[c][e] == 1:  # saves unnecessary computation
+                cost -= Y[c][e] * np.log(AL[c][e])
+    cost = cost / num_of_examples
     return cost
 
 
-def apply_batchnorm(A):
+def apply_batchnorm(A: np.array):
     """
     Description:
     performs batchnorm on the received activation values of a given layer.
@@ -164,7 +166,21 @@ def apply_batchnorm(A):
     NA = (A - mean_values) / np.sqrt((var_values + eps))
     return NA
 
+
 def linear_backward(dZ, cache):
+    """
+    description:
+    Implements the linear part of the backward propagation process for a single layer
+
+    @param dZ: the gradient of the cost with respect to the linear output of the current layer (layer l)
+    @param cache: tuple of values (A_prev, W, b) coming from the forward propagation in the current layer
+    @return:
+    dA_prev -- Gradient of the cost with respect to the activation (of the previous layer l-1), same shape as A_prev
+    dW -- Gradient of the cost with respect to W (current layer l), same shape as W
+    db -- Gradient of the cost with respect to b (current layer l), same shape as b
+
+    """
+
     pass
 
 
@@ -173,6 +189,14 @@ def linear_activation_backward(dA, cache, activation):
 
 
 def relu_backward(dA, activation_cache):
+    """
+
+    @param dA: the post-activation gradient
+    @param activation_cache: contains Z (stored during the forward propagation)
+    @return:
+    dZ: gradient of the cost with respect to Z
+    """
+
     pass
 
 
