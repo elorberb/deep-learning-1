@@ -5,7 +5,7 @@ import time
 from sklearn.model_selection import train_test_split
 import operator
 
-seed = 314977596
+seed = 1111
 np.random.seed(seed)
 
 
@@ -21,7 +21,7 @@ def initialize_parameters(layer_dims: list) -> dict:
     params = {}
     # starting from 1 because index 0 is input
     for i in range(1, len(layer_dims)):
-        Wi = np.random.randn(layer_dims[i], layer_dims[i - 1])  # define weights
+        Wi = np.random.randn(layer_dims[i], layer_dims[i - 1]) * np.sqrt(2 / layer_dims[i])  # define weights
         b = np.zeros((layer_dims[i], 1))  # define biases
         params[i] = [Wi, b]
     return params
@@ -40,9 +40,6 @@ def linear_forward(A: np.array, W: np.array, b: np.array) -> (float, tuple):
     linear_cache: a dictionary containing A, W, b (stored for making the backpropagation easier to compute)
 
     """
-    print("A", A.shape)
-    print("W", W.shape)
-    print("b", b)
     Z = np.dot(W, A) + b
     linear_cache = (A, W, b)
     return Z, linear_cache
@@ -146,7 +143,6 @@ def compute_cost(AL: np.array, Y: np.array) -> np.array:
     num_of_examples = AL.shape[1]
     for e in range(num_of_examples):
         for c in range(num_of_classes):
-            print(Y[c][e])
             if Y[c][e] == 1:  # saves unnecessary computation
                 cost -= Y[c][e] * np.log(AL[c][e])
     cost = cost / num_of_examples
@@ -183,6 +179,7 @@ def linear_backward(dZ, cache):
     db: Gradient of the cost with respect to b (current layer l), same shape as b
 
     """
+
     A_prev, W, b = cache
     len_examples = A_prev.shape[1]
 
@@ -233,7 +230,6 @@ def relu_backward(dA, activation_cache):
 
     dZ = np.array(dA, copy=True)
     dZ[activation_cache <= 0] = 0
-    dZ[activation_cache > 0] = 1
     return dZ
 
 
@@ -268,13 +264,14 @@ def l_model_backward(AL, Y, caches):
     grads = {}
     num_layers = len(caches)
     last_cache = caches[-1]
+    linear_last_cache, activation_last_cache = last_cache
     dZ = softmax_backward(dA=AL, activation_cache=Y.reshape(AL.shape))
-    dA, dW, db = linear_backward(dZ=dZ, cache=last_cache)
-    grads[f"dA+{num_layers}"], grads[f"dW+{num_layers}"], grads[f"db+{num_layers}"] = dA, dW, db
+    dA, dW, db = linear_backward(dZ=dZ, cache=linear_last_cache)
+    grads[f"dA{num_layers}"], grads[f"dW{num_layers}"], grads[f"db{num_layers}"] = dA, dW, db
 
     for curr_layer in reversed(range(num_layers - 1)):
         dA, dW, db = linear_activation_backward(grads[f"dA{curr_layer+2}"], caches[curr_layer], "relu")
-        grads[f"dA+{curr_layer+1}"], grads[f"dW+{curr_layer+1}"], grads[f"db+{curr_layer+1}"] = dA, dW, db
+        grads[f"dA{curr_layer+1}"], grads[f"dW{curr_layer+1}"], grads[f"db{curr_layer+1}"] = dA, dW, db
 
     return grads
 
@@ -291,9 +288,9 @@ def update_parameters(parameters, grads, learning_rate):
     parameters – the updated values of the parameters object provided as input
     """
     num_layers = len(parameters)
-    for i in range(num_layers+1):
-        parameters[i][0] -= learning_rate * grads[f"dW+{i}"]
-        parameters[i][1] -= learning_rate * grads[f"db+{i}"]
+    for i in range(1, num_layers+1):
+        parameters[i][0] -= learning_rate * grads[f"dW{i}"]
+        parameters[i][1] -= learning_rate * grads[f"db{i}"]
 
     return parameters
 
@@ -328,7 +325,7 @@ def l_layer_model(X, Y, layers_dims, learning_rate, num_iterations, batch_size, 
     train_iter, epoch = 0, 0
     stop_early = False
     costs, graph_costs = [], [[], []]
-    indices = np.arange(len(Y[0, :]))
+    indices = np.arange(len(y_train[0, :])) # define indices for batch data
 
     while train_iter < num_iterations and not stop_early:
         print(f'Current epoch = {epoch}')
@@ -338,9 +335,9 @@ def l_layer_model(X, Y, layers_dims, learning_rate, num_iterations, batch_size, 
         np.random.shuffle(shuffled_ind)
         accuracy_before, accuracy = 0, 0
 
-        while batch_begin < num_iterations and not stop_early:
+        while batch_begin < len(shuffled_ind) and not stop_early:
             # split data to batch
-            X_batch, y_batch = create_batch_data(batch_begin, batch_finish, shuffled_ind, X, Y)
+            X_batch, y_batch = create_batch_data(batch_begin, batch_finish, shuffled_ind, X_train, y_train)
             # perform forward propagation
             AL, caches = l_model_forward(X_batch, parameters, batch_norm)
             #  values needs to be saved each 100 training iterations (e.g. 3000 iterations -> 30 values).
@@ -355,7 +352,6 @@ def l_layer_model(X, Y, layers_dims, learning_rate, num_iterations, batch_size, 
                 if check_stopping_criterion(accuracy_before, accuracy):
                     stop_early = True
                     continue
-
                 accuracy_before = accuracy
             grads = l_model_backward(AL, y_batch, caches)
             parameters = update_parameters(parameters, grads, learning_rate)
@@ -374,7 +370,7 @@ def check_stopping_criterion(accuracy_before, current_accuracy):
     @return:
     bool representing whether to stop training
     """
-    return accuracy_before > current_accuracy + 0.01
+    return accuracy_before > current_accuracy + 0.1
 
 
 def create_batch_data(batch_begin, batch_finish, shuffled_ind, X, Y):
@@ -406,12 +402,11 @@ def split_preprocess_train_data(X, Y):
     @return:
     data preprocessed and split into training and validation
     """
-    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=seed)
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=1)
 
     X_train = X_train.reshape(X_train.shape[0], -1).T  # The "-1" makes reshape flatten the remaining dimensions
-    X_test = X_test.reshape(X_test.shape[0], -1).T
-
     X_train = np.divide(X_train, 255)
+    X_test = X_test.reshape(X_test.shape[0], -1).T
     X_test = np.divide(X_test, 255)
 
     y_train = np.squeeze(np.eye(y_train.max() + 1)[y_train.reshape(-1)]).T
