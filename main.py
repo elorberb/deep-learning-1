@@ -43,5 +43,8 @@ if __name__ == '__main__':
     #
     # f_w1_2 = np.dot(f_a.T, a_w1.T)
     # print(f_w1_2.T)
-    coverageModelSize = -1
-    assert coverageModelSize >= 0 and coverageModelSize <= 1
+    s = 0
+    l = [1,2,3,4,5]
+    num_layers = len(l)
+    for i in reversed(range(num_layers-1)):
+        print(i+2)

@@ -2,6 +2,7 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import time
+from sklearn.model_selection import train_test_split
 
 np.random.seed(314977596)
 
@@ -128,7 +129,7 @@ def l_model_forward(X: np.array, parameters: dict, use_batchnorm: bool) -> (np.a
     return AL, caches
 
 
-def compute_cost(AL: np.array, Y: np.array) -> float:
+def compute_cost(AL: np.array, Y: np.array) -> np.array:
     """
     Description:
     Implement the cost function defined by equation. The requested cost function is categorical cross-entropy loss.
@@ -175,21 +176,52 @@ def linear_backward(dZ, cache):
     @param dZ: the gradient of the cost with respect to the linear output of the current layer (layer l)
     @param cache: tuple of values (A_prev, W, b) coming from the forward propagation in the current layer
     @return:
-    dA_prev -- Gradient of the cost with respect to the activation (of the previous layer l-1), same shape as A_prev
-    dW -- Gradient of the cost with respect to W (current layer l), same shape as W
-    db -- Gradient of the cost with respect to b (current layer l), same shape as b
+    dA_prev: Gradient of the cost with respect to the activation (of the previous layer l-1), same shape as A_prev
+    dW: Gradient of the cost with respect to W (current layer l), same shape as W
+    db: Gradient of the cost with respect to b (current layer l), same shape as b
 
     """
+    A_prev, W, b = cache
+    len_examples = A_prev.shape[1]
 
-    pass
+    dA_prev = np.dot(W.T, dZ)
+    dW = np.dot(dZ, A_prev.T) / len_examples
+    db = np.sum(dZ, axis=1, keepdims=True) / len_examples
+
+    return dA_prev, dW, db
 
 
 def linear_activation_backward(dA, cache, activation):
-    pass
+    """
+    Description:
+    Implements the backward propagation for the LINEAR->ACTIVATION layer.
+    The function first computes dZ and then applies the linear_backward function.
+
+    @param dA: post activation gradient of the current layer
+    @param cache: contains both the linear cache and the activations cache
+    @param activation: which activation function used to compute the A
+    @return:
+    dA_prev – Gradient of the cost with respect to the activation (of the previous layer l-1), same shape as A_prev
+    dW – Gradient of the cost with respect to W (current layer l), same shape as W
+    db – Gradient of the cost with respect to b (current layer l), same shape as b
+
+    """
+    dZ = None
+    linear_cache, activation_cache = cache
+
+    if activation == 'relu':
+        dZ = relu_backward(dA, activation_cache)
+    elif activation == 'softmax':
+        dZ = softmax_backward(dA, activation_cache)
+
+    dA_prev, dW, db = linear_backward(dZ, linear_cache)
+    return dA_prev, dW, db
 
 
 def relu_backward(dA, activation_cache):
     """
+    Description:
+    Implements backward propagation for a ReLU unit
 
     @param dA: the post-activation gradient
     @param activation_cache: contains Z (stored during the forward propagation)
@@ -197,19 +229,71 @@ def relu_backward(dA, activation_cache):
     dZ: gradient of the cost with respect to Z
     """
 
-    pass
+    dZ = np.array(dA, copy=True)
+    dZ[activation_cache <= 0] = 0
+    dZ[activation_cache > 0] = 1
+    return dZ
 
 
 def softmax_backward(dA, activation_cache):
-    pass
+    """
+    Description:
+    Implements backward propagation for a softmax unit
+
+    @param dA: the post-activation gradient - p - output of the softmax forward propagation
+    @param activation_cache: contains Z (stored during the forward propagation) - Y - true value
+    @return:
+    dZ: gradient of the cost with respect to Z
+    """
+    # correct params
+    Y = activation_cache
+    p = dA
+    dZ = p - Y
+    return dZ
 
 
 def l_model_backward(AL, Y, caches):
-    pass
+    """
+    Description:
+    Implement the backward propagation process for the entire network.
+
+    @param AL: the probabilities vector, the output of the forward propagation (L_model_forward)
+    @param Y: the true labels vector (the "ground truth" - true classifications)
+    @param caches: list of caches containing for each layer: a) the linear cache; b) the activation cache
+    @return:
+    Grads - a dictionary with the gradients
+    """
+    grads = {}
+    num_layers = len(caches)
+    last_cache = caches[-1]
+    dZ = softmax_backward(dA=AL, activation_cache=Y.reshape(AL.shape))
+    dA, dW, db = linear_backward(dZ=dZ, cache=last_cache)
+    grads[f"dA+{num_layers}"], grads[f"dW+{num_layers}"], grads[f"db+{num_layers}"] = dA, dW, db
+
+    for curr_layer in reversed(range(num_layers - 1)):
+        dA, dW, db = linear_activation_backward(grads[f"dA{curr_layer+2}"], caches[curr_layer], "relu")
+        grads[f"dA+{curr_layer+1}"], grads[f"dW+{curr_layer+1}"], grads[f"db+{curr_layer+1}"] = dA, dW, db
+
+    return grads
 
 
 def update_parameters(parameters, grads, learning_rate):
-    pass
+    """
+    Description:
+    Updates parameters using gradient descent
+
+    @param parameters: a python dictionary containing the DNN architecture’s parameters
+    @param grads: a python dictionary containing the gradients (generated by L_model_backward)
+    @param learning_rate: the learning rate used to update the parameters (the “alpha”)
+    @return:
+    parameters – the updated values of the parameters object provided as input
+    """
+    num_layers = len(parameters)
+    for i in range(num_layers+1):
+        parameters[i][0] -= learning_rate * grads[f"dW+{i}"]
+        parameters[i][1] -= learning_rate * grads[f"db+{i}"]
+
+    return parameters
 
 
 def l_layer_model(X, Y, layers_dims, learning_rate, num_iterations, batch_size):
