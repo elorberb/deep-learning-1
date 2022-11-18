@@ -27,7 +27,7 @@ def initialize_parameters(layer_dims: list) -> dict:
     return params
 
 
-def linear_forward(A: np.array, W: np.array, b: np.array) -> (float, tuple):
+def linear_forward(A: np.array, W: np.array, b: np.array) -> (np.array, tuple):
     """
     Description:
     Implement the linear part of a layer's forward propagation.
@@ -71,7 +71,7 @@ def relu(Z: np.array) -> (np.array, tuple):
     return A, activation_cache
 
 
-def linear_activation_forward(A_prev: np.array, W: np.array, B: np.array, activation: str) -> (float, tuple):
+def linear_activation_forward(A_prev: np.array, W: np.array, B: np.array, activation: str) -> (np.array, list):
     """
     Description:
     Implement the forward propagation for the LINEAR->ACTIVATION layer
@@ -149,7 +149,7 @@ def compute_cost(AL: np.array, Y: np.array) -> np.array:
     return cost
 
 
-def apply_batchnorm(A: np.array):
+def apply_batchnorm(A: np.array) -> np.array:
     """
     Description:
     performs batchnorm on the received activation values of a given layer.
@@ -166,7 +166,7 @@ def apply_batchnorm(A: np.array):
     return NA
 
 
-def linear_backward(dZ, cache):
+def linear_backward(dZ: np.array, cache: tuple) -> tuple:
     """
     description:
     Implements the linear part of the backward propagation process for a single layer
@@ -190,7 +190,7 @@ def linear_backward(dZ, cache):
     return dA_prev, dW, db
 
 
-def linear_activation_backward(dA, cache, activation):
+def linear_activation_backward(dA: np.array, cache: tuple, activation: str) -> tuple:
     """
     Description:
     Implements the backward propagation for the LINEAR->ACTIVATION layer.
@@ -217,7 +217,7 @@ def linear_activation_backward(dA, cache, activation):
     return dA_prev, dW, db
 
 
-def relu_backward(dA, activation_cache):
+def relu_backward(dA: np.array, activation_cache: np.array) -> np.array:
     """
     Description:
     Implements backward propagation for a ReLU unit
@@ -233,7 +233,7 @@ def relu_backward(dA, activation_cache):
     return dZ
 
 
-def softmax_backward(dA, activation_cache):
+def softmax_backward(dA: np.array, activation_cache: np.array) -> np.array:
     """
     Description:
     Implements backward propagation for a softmax unit
@@ -250,7 +250,7 @@ def softmax_backward(dA, activation_cache):
     return dZ
 
 
-def l_model_backward(AL, Y, caches):
+def l_model_backward(AL: np.array, Y: np.array, caches: list[tuple]) -> dict:
     """
     Description:
     Implement the backward propagation process for the entire network.
@@ -270,13 +270,13 @@ def l_model_backward(AL, Y, caches):
     grads[f"dA{num_layers}"], grads[f"dW{num_layers}"], grads[f"db{num_layers}"] = dA, dW, db
 
     for curr_layer in reversed(range(num_layers - 1)):
-        dA, dW, db = linear_activation_backward(grads[f"dA{curr_layer+2}"], caches[curr_layer], "relu")
-        grads[f"dA{curr_layer+1}"], grads[f"dW{curr_layer+1}"], grads[f"db{curr_layer+1}"] = dA, dW, db
+        dA, dW, db = linear_activation_backward(grads[f"dA{curr_layer + 2}"], caches[curr_layer], "relu")
+        grads[f"dA{curr_layer + 1}"], grads[f"dW{curr_layer + 1}"], grads[f"db{curr_layer + 1}"] = dA, dW, db
 
     return grads
 
 
-def update_parameters(parameters, grads, learning_rate):
+def update_parameters(parameters: dict, grads: dict, learning_rate: float) -> dict:
     """
     Description:
     Updates parameters using gradient descent
@@ -288,14 +288,15 @@ def update_parameters(parameters, grads, learning_rate):
     parameters – the updated values of the parameters object provided as input
     """
     num_layers = len(parameters)
-    for i in range(1, num_layers+1):
+    for i in range(1, num_layers + 1):
         parameters[i][0] -= learning_rate * grads[f"dW{i}"]
         parameters[i][1] -= learning_rate * grads[f"db{i}"]
 
     return parameters
 
 
-def l_layer_model(X, Y, layers_dims, learning_rate, num_iterations, batch_size, batch_norm):
+def l_layer_model(X: np.array, Y: np.array, layers_dims: list, learning_rate: float, num_iterations: int,
+                  batch_size: int, batch_norm: bool) -> tuple:
     """
     Description:
     Implements a L-layer neural network.All layers but the last should have
@@ -325,7 +326,7 @@ def l_layer_model(X, Y, layers_dims, learning_rate, num_iterations, batch_size, 
     train_iter, epoch = 0, 0
     stop_early = False
     costs, graph_costs = [], [[], []]
-    indices = np.arange(len(y_train[0, :])) # define indices for batch data
+    indices = np.arange(len(y_train[0, :]))  # define indices for batch data
 
     while train_iter < num_iterations and not stop_early:
         print(f'Current epoch = {epoch}')
@@ -362,7 +363,7 @@ def l_layer_model(X, Y, layers_dims, learning_rate, num_iterations, batch_size, 
     return parameters, costs, graph_costs, train_iter
 
 
-def check_stopping_criterion(accuracy_before, current_accuracy):
+def check_stopping_criterion(accuracy_before: float, current_accuracy: float) -> bool:
     """
 
     @param accuracy_before: Accuracy level last iteration
@@ -373,12 +374,12 @@ def check_stopping_criterion(accuracy_before, current_accuracy):
     return accuracy_before > current_accuracy + 0.1
 
 
-def create_batch_data(batch_begin, batch_finish, shuffled_ind, X, Y):
+def create_batch_data(batch_begin: int, batch_finish: int, shuffled_ind: list, X: np.array, Y: np.array) -> tuple:
     """
 
     @param batch_begin: start ind for batch
     @param batch_finish: end idx for bach
-    @param shuffled_ind:  shuufles indices
+    @param shuffled_ind:  list represnting shuffled indices
     @param X: X data
     @param Y: Y data
     @return:
@@ -394,7 +395,7 @@ def create_batch_data(batch_begin, batch_finish, shuffled_ind, X, Y):
     return X_batch, y_batch
 
 
-def split_preprocess_train_data(X, Y):
+def split_preprocess_train_data(X: np.array, Y: np.array):
     """
 
     @param X: the X_train data from keras
@@ -415,7 +416,7 @@ def split_preprocess_train_data(X, Y):
     return X_train, X_test, y_train, y_test
 
 
-def split_preprocess_test_data(X_test, y_test):
+def split_preprocess_test_data(X_test: np.array, y_test: np.array):
     """
 
     @param X_test: X testing data from keras
@@ -430,7 +431,7 @@ def split_preprocess_test_data(X_test, y_test):
     return X_test, y_test
 
 
-def predict(X, Y, parameters, use_batchnorm):
+def predict(X: np.array, Y: np.array, parameters: dict, use_batchnorm: bool):
     """
 
     @param X: the input data, a numpy array of shape (height*width, number_of_examples)
@@ -438,7 +439,7 @@ def predict(X, Y, parameters, use_batchnorm):
     @param parameters: a python dictionary containing the DNN architecture’s parameters
     @param use_batchnorm:
     @return:
-    Accuracy of the NN for the data
+    return accuracy metric for the NN
     """
     count_match = 0
     prob, caches = l_model_forward(X, parameters, use_batchnorm)
@@ -447,9 +448,45 @@ def predict(X, Y, parameters, use_batchnorm):
     for i in range(predictions_length):
         curr_Y = max(enumerate(Y[:, i]), key=operator.itemgetter(1))[0]
         curr_prob = max(enumerate(prob[:, i]), key=operator.itemgetter(1))[0]
-
         if curr_prob == curr_Y:
             count_match += 1
-    return count_match / Y.shape[1]
+    accuracy = np.round((count_match / Y.shape[1]), 4)
+
+    return accuracy
 
 
+def get_accuracy_results(X_train_p, X_eval, y_train_p, y_eval, X_test, y_test, params, batch_norm):
+    """
+    Calculates accuracy results for training, evaluation, and testing data
+    @return:
+    all accuracy results
+    """
+    acc_train = predict(X_train_p, y_train_p, params, batch_norm)
+    acc_eval = predict(X_eval, y_eval, params, batch_norm)
+    acc_test = predict(X_test, y_test, params, batch_norm)
+    return [acc_train, acc_eval, acc_test]
+
+
+def save_results(costs, parameters, accuracy_results, batch_size, batch_norm, name, hyper_param):
+    """ Save the results of the NN to new dir called output"""
+    def write_info_to_file():
+        f = open(f"output/results_{name}.txt", "w")
+        f.write(f"Parameters: {parameters}\n")
+        f.write(f"Accuracy Train: {accuracy_results[0]}\n")
+        f.write(f"Accuracy Validation: {accuracy_results[1]}\n")
+        f.write(f"Accuracy Test: {accuracy_results[2]}\n")
+        f.write(f"Cost: {costs[1]}\n")
+        f.close()
+
+    def create_plot():
+        plt.plot(costs[0], costs[1])
+        plt.ylabel('cost')
+        plt.xlabel('iterations')
+        plt.title(f'Batch Size: {batch_size}, Batchnorm: {batch_norm}')
+        plt.savefig("output/plot.png")
+
+    print(hyper_param)
+    if not os.path.exists("output"):
+        os.mkdir("output")
+    write_info_to_file()
+    create_plot()
