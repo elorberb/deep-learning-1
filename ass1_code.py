@@ -476,6 +476,7 @@ def save_results(costs, parameters, accuracy_results, batch_size, batch_norm, na
         f.write(f"Accuracy Validation: {accuracy_results[1]}\n")
         f.write(f"Accuracy Test: {accuracy_results[2]}\n")
         f.write(f"Cost: {costs[1]}\n")
+        f.write(hyper_param)
         f.close()
 
     def create_plot():
@@ -483,10 +484,32 @@ def save_results(costs, parameters, accuracy_results, batch_size, batch_norm, na
         plt.ylabel('cost')
         plt.xlabel('iterations')
         plt.title(f'Batch Size: {batch_size}, Batchnorm: {batch_norm}')
-        plt.savefig("output/plot.png")
+        plt.savefig(f"output/plot_{name}.png")
 
     print(hyper_param)
     if not os.path.exists("output"):
         os.mkdir("output")
     write_info_to_file()
     create_plot()
+
+
+def create_NN(X_train_p, X_eval, y_train_p, y_eval, X_test, y_test, batch_norm, X_train, y_train, layers, learning_rate,
+                                                        number_iterations, batch_size, name):
+    """
+    Create NN with specific parameters.
+    Saving the results and plot for the cost values.
+
+    """
+    start_time = time.time()
+    params, costs, costs_for_graph, number_run = l_layer_model(X_train, y_train, layers, learning_rate,
+                                                               number_iterations, batch_size, batch_norm=False)
+
+    finish_time = (time.time() - start_time) / 60
+    finish_time = "%.3f" % finish_time
+    hyper_param = "Hyper parameters: \nbatch=" + str(batch_size) + "\nlearningRate=" + str(learning_rate) \
+                  + "\nnumberIterations=" + str(number_iterations) + "\nbatchNorm=" + str(batch_norm) + \
+                  "\nNumberRun=" + str(number_run) + "\nTime in minutes=" + str(finish_time)
+
+    accuracy_results = get_accuracy_results(X_train_p, X_eval, y_train_p, y_eval, X_test, y_test, params,
+                                            batch_norm)
+    save_results(costs_for_graph, params, accuracy_results, batch_size, batch_norm, name, hyper_param)
