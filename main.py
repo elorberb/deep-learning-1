@@ -15,9 +15,9 @@ if __name__ == '__main__':
     number_iterations = 20000
     batch_norm = False
 
-    create_NN(X_train_p, X_eval, y_train_p, y_eval, X_test, y_test, batch_norm, X_train, y_train, layers, learning_rate,
+    create_nn(X_train_p, X_eval, y_train_p, y_eval, X_test, y_test, batch_norm, X_train, y_train, layers, learning_rate,
               number_iterations, batch_size, name="batch_norm_FALSE")
 
     batch_norm = True
-    create_NN(X_train_p, X_eval, y_train_p, y_eval, X_test, y_test, batch_norm, X_train, y_train, layers, learning_rate,
+    create_nn(X_train_p, X_eval, y_train_p, y_eval, X_test, y_test, batch_norm, X_train, y_train, layers, learning_rate,
               number_iterations, batch_size, name="batch_norm_TRUE")

@@ -257,7 +257,7 @@ def l_model_backward(AL: np.array, Y: np.array, caches: list[tuple]) -> dict:
 
     @param AL: the probabilities vector, the output of the forward propagation (L_model_forward)
     @param Y: the true labels vector (the "ground truth" - true classifications)
-    @param caches: list of caches containing for each layer: a) the linear cache; b) the activation cache
+    @param caches: list of caches containing for each layer: a- the linear cache; b- the activation cache
     @return:
     Grads - a dictionary with the gradients
     """
@@ -299,7 +299,7 @@ def l_layer_model(X: np.array, Y: np.array, layers_dims: list, learning_rate: fl
                   batch_size: int, batch_norm: bool) -> tuple:
     """
     Description:
-    Implements a L-layer neural network.All layers but the last should have
+    Implements L-layer neural network.All layers but the last should have
     the ReLU activation function, and the final layer will apply the softmax activation function.
     The size of the output layer should be equal to the number of labels in the data.
     Please select a batch size that enables your
@@ -379,7 +379,7 @@ def create_batch_data(batch_begin: int, batch_finish: int, shuffled_ind: list, X
 
     @param batch_begin: start ind for batch
     @param batch_finish: end idx for bach
-    @param shuffled_ind:  list represnting shuffled indices
+    @param shuffled_ind:  list representing shuffled indices
     @param X: X data
     @param Y: Y data
     @return:
@@ -493,8 +493,8 @@ def save_results(costs, parameters, accuracy_results, batch_size, batch_norm, na
     create_plot()
 
 
-def create_NN(X_train_p, X_eval, y_train_p, y_eval, X_test, y_test, batch_norm, X_train, y_train, layers, learning_rate,
-                                                        number_iterations, batch_size, name):
+def create_nn(X_train_p, X_eval, y_train_p, y_eval, X_test, y_test, batch_norm, X_train, y_train, layers, learning_rate,
+              number_iterations, batch_size, name):
     """
     Create NN with specific parameters.
     Saving the results and plot for the cost values.
