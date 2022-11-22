@@ -502,7 +502,7 @@ def create_nn(X_train_p, X_eval, y_train_p, y_eval, X_test, y_test, batch_norm, 
     """
     start_time = time.time()
     params, costs, costs_for_graph, number_run = l_layer_model(X_train, y_train, layers, learning_rate,
-                                                               number_iterations, batch_size, batch_norm=False)
+                                                               number_iterations, batch_size, batch_norm)
 
     finish_time = (time.time() - start_time) / 60
     finish_time = "%.3f" % finish_time

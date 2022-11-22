@@ -14,7 +14,7 @@ if __name__ == '__main__':
     learning_rate = 0.009
     number_iterations = 20000
     batch_norm = False
-
+    #
     create_nn(X_train_p, X_eval, y_train_p, y_eval, X_test, y_test, batch_norm, X_train, y_train, layers, learning_rate,
               number_iterations, batch_size, name="batch_norm_FALSE")
 
